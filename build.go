@@ -167,13 +167,22 @@ func updGitIgnore(roots []string) {
 }
 
 func getGitInfo() (branch, hash string, revisions int) {
+	branch = "unknown"
+	hash = "unknown"
 	o, err := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD").Output()
-	assert(err)
+	if err != nil {
+		return
+	}
 	branch = strings.TrimSpace(string(o))
 	o, err = exec.Command("git", "log", "-n1", "--pretty=format:%h").Output()
-	assert(err)
+	if err != nil {
+		return
+	}
 	hash = string(o)
 	o, err = exec.Command("git", "log", "--oneline").Output()
+	if err != nil {
+		return
+	}
 	revisions = len(strings.Split(string(o), "\n")) - 1
 	return
 }
