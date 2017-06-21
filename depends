@@ -13,6 +13,5 @@
 #if <branch> omitted, master is assumed, and the default value for <commit> is HEAD.
 
 # Following are sample dependencies, modify as appropriate.
-git@github.com:xrfang/go-conf.git
-https://github.com/ernesto-jimenez/httplogger
-github.com/pkg/errors
+https://github.com/xrfang/go-conf
+github.com/go-sql-driver/mysql
