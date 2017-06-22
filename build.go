@@ -247,6 +247,7 @@ func run(args ...string) (err error) {
 		}
 	}
 	cmd.Env = append(cmd.Env, "GOPATH="+PROJ_ROOT, "GOBUILD_MODE="+CMD)
+	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
