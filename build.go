@@ -119,7 +119,11 @@ func updDepends(deps []depSpec, full bool) (depRoots []string) {
 			args = append(args, "--depth", "1")
 		}
 		args = append(args, "--branch", repo.branch, "--single-branch", cd)
-		assert(exec.Command("git", args...).Run())
+		_, err = exec.Command("git", args...).Output()
+		if err != nil {
+			fmt.Println(string(err.(*exec.ExitError).Stderr))
+			os.Exit(1)
+		}
 		if repo.commit != "HEAD" {
 			os.Chdir(cd)
 			assert(exec.Command("git", "checkout", repo.commit).Run())
