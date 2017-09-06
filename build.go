@@ -269,45 +269,73 @@ func run(args ...string) (err error) {
 
 func parseCmdline() (string, string, []string) {
 	PROJ_ROOT = os.Args[len(os.Args)-1]
-	fs, err := filepath.Glob(PROJ_ROOT + "/src/*/*.go")
-	assert(err)
-	mains := make(map[string]bool)
-	for _, fn := range fs {
-		func() {
-			f, err := os.Open(fn)
-			assert(err)
-			defer f.Close()
-			buf := make([]byte, 64)
-			n, err := f.Read(buf)
-			assert(err)
-			pkg := string(buf[:n])
-			if strings.HasPrefix(pkg, "package main") {
-				mains[path.Base(path.Dir(fn))] = true
-			}
-		}()
+	var mains, main []string
+	filepath.Walk(PROJ_ROOT, func(path string, info os.FileInfo,
+		err error) error {
+		if err == nil && !info.IsDir() && strings.HasSuffix(path, ".go") {
+			func() {
+				dir := filepath.Dir(path[len(PROJ_ROOT)+5:])
+				if dir == "." {
+					return
+				}
+				f, err := os.Open(path)
+				if err != nil {
+					return
+				}
+				defer f.Close()
+				score := 0
+				lines := bufio.NewScanner(f)
+				for lines.Scan() {
+					line := lines.Text()
+					if strings.HasPrefix(line, "package main") {
+						score++
+					}
+					if strings.HasPrefix(line, "func main()") {
+						score++
+					}
+					if score > 1 {
+						break
+					}
+				}
+				if score > 1 {
+					mains = append(mains, dir)
+				}
+			}()
+		}
+		return nil
+	})
+	if len(mains) == 0 {
+		fmt.Println("No target found (require a func main() in package main)")
+		os.Exit(0)
 	}
 	PROJ_NAME := path.Base(PROJ_ROOT)
 	PROJ_ARGS := os.Args[1 : len(os.Args)-1]
-	if len(PROJ_ARGS) > 0 && mains[PROJ_ARGS[0]] {
+	if len(PROJ_ARGS) > 0 {
 		PROJ_NAME = PROJ_ARGS[0]
 		PROJ_ARGS = PROJ_ARGS[1:]
 	}
-	if !mains[PROJ_NAME] {
-		if len(mains) == 1 {
-			for m := range mains {
-				PROJ_NAME = m
-			}
-		} else {
-			fmt.Println("Program entry (package main) not match.")
-			if len(mains) > 0 {
-				fmt.Print("Available entries:")
-				for m := range mains {
-					fmt.Printf(" [%s]", m)
-				}
-				fmt.Println()
-				os.Exit(0)
-			}
+	for _, m := range mains {
+		if strings.Contains(m, PROJ_NAME) {
+			main = append(main, m)
 		}
+	}
+	switch len(main) {
+	case 0:
+		fmt.Printf("Invalid sub-project name [%s], valid names:",
+			PROJ_NAME)
+		for _, m := range mains {
+			fmt.Printf(" [%s]", m)
+		}
+		fmt.Println()
+		os.Exit(0)
+	case 1:
+	default:
+		fmt.Print("Ambiguous sub-project name, matched:")
+		for _, m := range main {
+			fmt.Printf(" [%s]", m)
+		}
+		fmt.Println()
+		os.Exit(0)
 	}
 	return PROJ_ROOT, PROJ_NAME, PROJ_ARGS
 }
