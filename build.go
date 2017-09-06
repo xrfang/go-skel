@@ -37,7 +37,10 @@ type buildConf struct {
 	BUILD_TAGS     string
 }
 
-var PROJ_ROOT, CMD string
+var (
+	PROJ_ROOT, PROJ_NAME, CMD string
+	PROJ_ARGS                 []string
+)
 
 func getDepends() (deps []depSpec) {
 	f, err := os.Open("depends")
@@ -193,7 +196,8 @@ func getGitInfo() (branch, hash string, revisions int) {
 }
 
 func parseConf() (bc buildConf, err error) {
-	f, err := os.Open(path.Join(PROJ_ROOT, "build.conf"))
+	conf := path.Join(PROJ_ROOT, "src", PROJ_NAME, "build.conf")
+	f, err := os.Open(conf)
 	if err != nil {
 		if os.IsNotExist(err) {
 			fmt.Println("[build.conf] not found, continue with defaults...")
@@ -204,7 +208,7 @@ func parseConf() (bc buildConf, err error) {
 	defer f.Close()
 	getCmd := func(cmdline string) []string {
 		cmdline = strings.TrimSpace(cmdline)
-		w := "/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0192456789."
+		w := "/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789."
 		if strings.ContainsAny(cmdline[0:1], w) {
 			return strings.Split(cmdline, " ")
 		}
@@ -307,9 +311,10 @@ func parseCmdline() (string, string, []string) {
 	}
 	return PROJ_ROOT, PROJ_NAME, PROJ_ARGS
 }
+
 func main() {
 	CMD = path.Base(os.Args[0])
-	PROJ_ROOT, PROJ_NAME, PROJ_ARGS := parseCmdline()
+	PROJ_ROOT, PROJ_NAME, PROJ_ARGS = parseCmdline()
 	assert(os.Chdir(PROJ_ROOT))
 	depRoots := updDepends(getDepends(), CMD == "sync")
 	updGitIgnore(depRoots)
@@ -362,6 +367,7 @@ func main() {
 		}
 	}
 	if CMD == "run" {
+		fmt.Println("\nRUNNING:")
 		args := []string{path.Join(PROJ_ROOT, "bin", PROJ_NAME)}
 		args = append(args, PROJ_ARGS...)
 		assert(run(args...))
