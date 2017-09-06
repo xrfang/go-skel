@@ -30,10 +30,11 @@ type depSpec struct {
 }
 
 type buildConf struct {
-	PRE_COMPILE_EXEC  []string
-	POST_COMPILE_EXEC []string
-	EXTRA_LDFLAGS     string
-	BUILD_TAGS        string
+	PRE_BUILD_EXEC []string
+	PRE_DEBUG_EXEC []string
+	POST_COMP_EXEC []string
+	EXTRA_LDFLAGS  string
+	BUILD_TAGS     string
 }
 
 var PROJ_ROOT, CMD string
@@ -221,10 +222,12 @@ func parseConf() (bc buildConf, err error) {
 		}
 		key := strings.TrimSpace(kv[0])
 		switch strings.ToUpper(key) {
-		case "PRE_COMPILE_EXEC":
-			bc.PRE_COMPILE_EXEC = getCmd(kv[1])
-		case "POST_COMPILE_EXEC":
-			bc.POST_COMPILE_EXEC = getCmd(kv[1])
+		case "PRE_BUILD_EXEC":
+			bc.PRE_BUILD_EXEC = getCmd(kv[1])
+		case "PRE_DEBUG_EXEC":
+			bc.PRE_DEBUG_EXEC = getCmd(kv[1])
+		case "POST_COMP_EXEC":
+			bc.POST_COMP_EXEC = getCmd(kv[1])
 		case "EXTRA_LDFLAGS":
 			bc.EXTRA_LDFLAGS = strings.TrimSpace(kv[1])
 		case "BUILD_TAGS":
@@ -319,12 +322,15 @@ func main() {
 		fmt.Printf("parseConf: %s\n", err)
 		return
 	}
-	if len(bc.PRE_COMPILE_EXEC) > 0 {
-		fmt.Printf("PRE_COMPILE_EXEC: %s\n", strings.Join(bc.PRE_COMPILE_EXEC,
-			" "))
-		err = run(bc.PRE_COMPILE_EXEC...)
+	scripts := bc.PRE_BUILD_EXEC
+	if CMD == "run" && len(bc.PRE_DEBUG_EXEC) > 0 {
+		scripts = bc.PRE_DEBUG_EXEC
+	}
+	if len(scripts) > 0 {
+		fmt.Printf("PRE_COMP_EXEC: %s\n", strings.Join(scripts, " "))
+		err = run(scripts...)
 		if err != nil {
-			fmt.Printf("PRE_COMPILE_EXEC: %s\n", err)
+			fmt.Printf("PRE_COMP_EXEC: %s\n", err)
 			return
 		}
 	}
@@ -347,12 +353,11 @@ func main() {
 		fmt.Printf("COMPILE: %s\n", err)
 		return
 	}
-	if len(bc.POST_COMPILE_EXEC) > 0 {
-		fmt.Printf("POST_COMPILE_EXEC: %s\n", strings.Join(
-			bc.POST_COMPILE_EXEC, " "))
-		err = run(bc.POST_COMPILE_EXEC...)
+	if len(bc.POST_COMP_EXEC) > 0 {
+		fmt.Printf("POST_COMP_EXEC: %s\n", strings.Join(bc.POST_COMP_EXEC, " "))
+		err = run(bc.POST_COMP_EXEC...)
 		if err != nil {
-			fmt.Printf("POST_COMPILE_EXEC: %s", err)
+			fmt.Printf("POST_COMP_EXEC: %s", err)
 			return
 		}
 	}
