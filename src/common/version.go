@@ -9,6 +9,7 @@ import (
 var (
 	_G_HASH string
 	_G_REVS string
+	_BUILT_ string
 )
 
 func verinfo() string {
