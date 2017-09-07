@@ -315,20 +315,24 @@ func parseCmdline() (string, string, []string) {
 		PROJ_ARGS = PROJ_ARGS[1:]
 	}
 	for _, m := range mains {
+		if m == PROJ_NAME {
+			main = []string{m}
+			break
+		}
 		if strings.Contains(m, PROJ_NAME) {
 			main = append(main, m)
 		}
 	}
 	switch len(main) {
 	case 0:
-		fmt.Printf("Invalid sub-project name [%s], valid names:",
-			PROJ_NAME)
+		fmt.Printf("Invalid sub-project [%s], valid names:", PROJ_NAME)
 		for _, m := range mains {
 			fmt.Printf(" [%s]", m)
 		}
 		fmt.Println()
 		os.Exit(0)
 	case 1:
+		PROJ_NAME = main[0]
 	default:
 		fmt.Print("Ambiguous sub-project name, matched:")
 		for _, m := range main {
