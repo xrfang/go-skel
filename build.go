@@ -258,8 +258,10 @@ func run(args ...string) (err error) {
 		}
 	}
 	cmd.Env = append(cmd.Env, "GOPATH="+PROJ_ROOT)
-	if strings.HasPrefix(CMD, "x") {
-		cmd.Env = append(cmd.Env, "GOARCH="+CMD[1:])
+	if CMD == "win" {
+		cmd.Env = append(cmd.Env, "GOOS=windows")
+	} else if CMD == "arm" {
+		cmd.Env = append(cmd.Env, "GOARCH=arm", "GOARM=7")
 	}
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
@@ -373,8 +375,12 @@ func main() {
 	}
 	branch, hash, revs := getGitInfo()
 	args := []string{"go"}
-	if strings.HasPrefix(CMD, "x") {
-		args = append(args, "build", "-o", "bin/"+PROJ_NAME)
+	if CMD != "build" && CMD != "run" {
+		exe := PROJ_NAME
+		if CMD == "win" {
+			exe += ".exe"
+		}
+		args = append(args, "build", "-o", "bin/"+exe)
 	} else {
 		args = append(args, "install")
 	}
