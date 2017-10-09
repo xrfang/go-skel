@@ -314,7 +314,7 @@ func parseCmdline() (string, string, []string) {
 	}
 	PROJ_NAME := path.Base(PROJ_ROOT)
 	PROJ_ARGS := os.Args[1 : len(os.Args)-1]
-	if len(PROJ_ARGS) > 0 {
+	if len(PROJ_ARGS) > 0 && !strings.HasPrefix(PROJ_ARGS[0], "-") {
 		PROJ_NAME = PROJ_ARGS[0]
 		PROJ_ARGS = PROJ_ARGS[1:]
 	}
