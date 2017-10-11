@@ -252,10 +252,7 @@ func run(args ...string) (err error) {
 	}
 	cmd := exec.Command(exe, args[1:]...)
 	for _, e := range os.Environ() {
-		if strings.HasPrefix(e, "PATH=") {
-			cmd.Env = append(cmd.Env, e)
-			break
-		}
+		cmd.Env = append(cmd.Env, e)
 	}
 	cmd.Env = append(cmd.Env, "GOPATH="+PROJ_ROOT)
 	if args[0] == "go" && args[1] == "build" {
