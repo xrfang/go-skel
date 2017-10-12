@@ -246,11 +246,7 @@ func parseConf() (bc buildConf, err error) {
 }
 
 func run(args ...string) (err error) {
-	exe := args[0]
-	if exe == "go" {
-		exe = "/usr/local/go/bin/go"
-	}
-	cmd := exec.Command(exe, args[1:]...)
+	cmd := exec.Command(args[0], args[1:]...)
 	for _, e := range os.Environ() {
 		cmd.Env = append(cmd.Env, e)
 	}
@@ -382,6 +378,10 @@ func main() {
 		args = append(args, "build", "-o", "bin/"+exe)
 	} else {
 		args = append(args, "install")
+	}
+	//add race condiction detection for debugging purpose
+	if CMD == "run" {
+		args = append(args, "-race")
 	}
 	if len(bc.BUILD_TAGS) > 0 {
 		args = append(args, "-tags", bc.BUILD_TAGS)
