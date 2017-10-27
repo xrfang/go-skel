@@ -264,8 +264,11 @@ func run(args ...string) (err error) {
 	return cmd.Run()
 }
 
-func parseCmdline() (string, string, []string) {
+func parseCmdline() {
 	PROJ_ROOT = os.Args[len(os.Args)-1]
+	if CMD == "sync" {
+		return
+	}
 	var mains, main []string
 	filepath.Walk(PROJ_ROOT, func(path string, info os.FileInfo,
 		err error) error {
@@ -305,8 +308,8 @@ func parseCmdline() (string, string, []string) {
 		fmt.Println("No target found (require a func main() in package main)")
 		os.Exit(0)
 	}
-	PROJ_NAME := path.Base(PROJ_ROOT)
-	PROJ_ARGS := os.Args[1 : len(os.Args)-1]
+	PROJ_NAME = path.Base(PROJ_ROOT)
+	PROJ_ARGS = os.Args[1 : len(os.Args)-1]
 	if len(PROJ_ARGS) > 0 && !strings.HasPrefix(PROJ_ARGS[0], "-") {
 		PROJ_NAME = PROJ_ARGS[0]
 		PROJ_ARGS = PROJ_ARGS[1:]
@@ -338,12 +341,11 @@ func parseCmdline() (string, string, []string) {
 		fmt.Println()
 		os.Exit(0)
 	}
-	return PROJ_ROOT, PROJ_NAME, PROJ_ARGS
 }
 
 func main() {
 	CMD = path.Base(os.Args[0])
-	PROJ_ROOT, PROJ_NAME, PROJ_ARGS = parseCmdline()
+	parseCmdline()
 	assert(os.Chdir(PROJ_ROOT))
 	depRoots := updDepends(getDepends(), CMD == "sync")
 	updGitIgnore(depRoots)
