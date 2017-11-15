@@ -221,7 +221,7 @@ func parseConf() (bc buildConf, err error) {
 			continue
 		}
 		kv := strings.SplitN(line, "=", 2)
-		if len(kv) != 2 {
+		if len(kv) != 2 || kv[0] == "" || kv[1] == "" {
 			continue
 		}
 		key := strings.TrimSpace(kv[0])
