@@ -12,18 +12,18 @@ func assert(err error) {
 	}
 }
 
-func catch(err *error, handler ...func()) {
-	if e := recover(); e != nil {
-		*err = e.(error)
-	}
-	for _, h := range handler {
-		h()
-	}
+type exception []string
+
+func (e exception) Error() string {
+	return strings.Join(e, "\n")
 }
 
-func trace(msg string, args ...interface{}) (logs []string) {
-	msg = fmt.Sprintf(msg, args...)
-	logs = []string{msg, ""}
+func throw(msg string, args ...interface{}) {
+	panic(trace(msg, args...))
+}
+
+func trace(msg string, args ...interface{}) (logs exception) {
+	logs = exception{fmt.Sprintf(msg, args...)}
 	n := 1
 	for {
 		n++
@@ -36,7 +36,17 @@ func trace(msg string, args ...interface{}) (logs []string) {
 		if strings.HasPrefix(name, "runtime.") {
 			continue
 		}
-		logs = append(logs, fmt.Sprintf("(%s:%d) %s", file, line, name))
+		fn := file[strings.Index(file, "/src/")+5:]
+		logs = append(logs, fmt.Sprintf("\t(%s:%d) %s", fn, line, name))
 	}
 	return
+}
+
+func catch(err *error, handler ...func()) {
+	if e := recover(); e != nil {
+		*err = e.(error)
+	}
+	for _, h := range handler {
+		h()
+	}
 }
