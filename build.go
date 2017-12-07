@@ -125,7 +125,12 @@ func updDepends(deps []depSpec, full bool) (depRoots []string) {
 		args = append(args, "--branch", repo.branch, "--single-branch", cd)
 		_, err = exec.Command("git", args...).Output()
 		if err != nil {
-			fmt.Println(string(err.(*exec.ExitError).Stderr))
+			switch err.(type) {
+			case *exec.ExitError:
+				fmt.Println(string(err.(*exec.ExitError).Stderr))
+			default:
+				fmt.Println(err)
+			}
 			os.Exit(1)
 		}
 		if repo.commit != "HEAD" {
