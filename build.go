@@ -393,7 +393,7 @@ func main() {
 	if len(bc.BUILD_TAGS) > 0 {
 		args = append(args, "-tags", bc.BUILD_TAGS)
 	}
-	ldflags := fmt.Sprintf(`%s -X main._G_BRANCH=%s -X main._G_HASH=%s
+	ldflags := fmt.Sprintf(`%s -s -w -X main._G_BRANCH=%s -X main._G_HASH=%s
 		-X main._G_REVS=%d -X main._BUILT_=%d`, bc.EXTRA_LDFLAGS, branch,
 		hash, revs, time.Now().Unix())
 	args = append(args, "-ldflags", ldflags, PROJ_NAME)
