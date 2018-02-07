@@ -311,7 +311,7 @@ func parseCmdline() {
 	})
 	if len(mains) == 0 {
 		fmt.Println("No target found (require a func main() in package main)")
-		os.Exit(0)
+		os.Exit(1)
 	}
 	PROJ_NAME = path.Base(PROJ_ROOT)
 	PROJ_ARGS = os.Args[1 : len(os.Args)-1]
@@ -335,7 +335,7 @@ func parseCmdline() {
 			fmt.Printf(" [%s]", m)
 		}
 		fmt.Println()
-		os.Exit(0)
+		os.Exit(1)
 	case 1:
 		PROJ_NAME = main[0]
 	default:
@@ -344,11 +344,17 @@ func parseCmdline() {
 			fmt.Printf(" [%s]", m)
 		}
 		fmt.Println()
-		os.Exit(0)
+		os.Exit(1)
 	}
 }
 
 func main() {
+	defer func() {
+		if e := recover(); e != nil {
+			fmt.Println("PANIC:", e.(error).Error())
+			os.Exit(1)
+		}
+	}()
 	CMD = path.Base(os.Args[0])
 	parseCmdline()
 	assert(os.Chdir(PROJ_ROOT))
@@ -361,7 +367,7 @@ func main() {
 	bc, err := parseConf()
 	if err != nil {
 		fmt.Printf("parseConf: %s\n", err)
-		return
+		os.Exit(1)
 	}
 	scripts := bc.PRE_BUILD_EXEC
 	if CMD == "run" && len(bc.PRE_DEBUG_EXEC) > 0 {
@@ -372,7 +378,7 @@ func main() {
 		err = run(scripts...)
 		if err != nil {
 			fmt.Printf("PRE_COMP_EXEC: %s\n", err)
-			return
+			os.Exit(1)
 		}
 	}
 	branch, hash, revs := getGitInfo()
@@ -400,14 +406,14 @@ func main() {
 	err = run(args...)
 	if err != nil {
 		fmt.Printf("COMPILE: %s\n", err)
-		return
+		os.Exit(1)
 	}
 	if len(bc.POST_COMP_EXEC) > 0 {
 		fmt.Printf("POST_COMP_EXEC: %s\n", strings.Join(bc.POST_COMP_EXEC, " "))
 		err = run(bc.POST_COMP_EXEC...)
 		if err != nil {
 			fmt.Printf("POST_COMP_EXEC: %s", err)
-			return
+			os.Exit(1)
 		}
 	}
 	if CMD == "run" {
