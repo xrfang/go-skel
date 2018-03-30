@@ -24,5 +24,6 @@ func main() {
 	}
 	fmt.Println("This is [main] project.")
 	err := work()
-	fmt.Printf("ERR=%v\n", err)
+	fmt.Println("===")
+	Error(err)
 }
