@@ -3,12 +3,18 @@ package main
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 	"unicode"
 )
 
 var DEBUG_TARGETS []string
+var rv *regexp.Regexp
+
+func init() {
+	rv = regexp.MustCompile(`.func\d+(.\d+)?\s*$`)
+}
 
 func Error(err error) {
 	fmt.Fprintln(os.Stderr, trace(err.Error()))
@@ -20,20 +26,22 @@ func Log(msg string, args ...interface{}) {
 }
 
 func Dbg(msg string, args ...interface{}) {
-	var wanted bool
 	if len(DEBUG_TARGETS) == 0 {
-		wanted = false
-	} else if DEBUG_TARGETS[0] == "*" {
+		return
+	}
+	var wanted bool
+	caller := ""
+	log := trace("")
+	for _, l := range log {
+		if l != "" {
+			caller = l
+			break
+		}
+	}
+	caller = rv.ReplaceAllString(caller, "")
+	if DEBUG_TARGETS[0] == "*" {
 		wanted = true
 	} else {
-		caller := ""
-		log := trace("")
-		for _, l := range log {
-			if l != "" {
-				caller = l
-				break
-			}
-		}
 		if caller == "" {
 			wanted = true
 		} else {
@@ -46,7 +54,7 @@ func Dbg(msg string, args ...interface{}) {
 		}
 	}
 	if wanted {
-		Log(msg, args...)
+		Log(strings.TrimSpace(caller)+"> "+msg, args...)
 	}
 }
 
