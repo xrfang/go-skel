@@ -8,7 +8,7 @@ import (
 	"unicode"
 )
 
-var DEBUG_MODE bool
+var DEBUG_TARGETS []string
 
 func Error(err error) {
 	fmt.Fprintln(os.Stderr, trace(err.Error()))
@@ -20,9 +20,35 @@ func Log(msg string, args ...interface{}) {
 }
 
 func Dbg(msg string, args ...interface{}) {
-	if DEBUG_MODE {
+	var wanted bool
+	if len(DEBUG_TARGETS) == 0 {
+		wanted = false
+	} else if DEBUG_TARGETS[0] == "*" {
+		wanted = true
+	} else {
+		caller := ""
+		log := trace("")
+		if len(log) > 1 {
+			caller = log[1]
+		}
+		if caller == "" {
+			wanted = true
+		} else {
+			for _, t := range DEBUG_TARGETS {
+				if strings.HasSuffix(caller, t) {
+					wanted = true
+					break
+				}
+			}
+		}
+	}
+	if wanted {
 		Log(msg, args...)
 	}
+}
+
+func SetDebugTargets(targets string) {
+	DEBUG_TARGETS = strings.Split(targets, ",")
 }
 
 func Perf(tag string, work func()) {

@@ -6,11 +6,10 @@ import (
 )
 
 func work() (err error) {
+	Dbg("start working")
 	defer catch(&err, func() {
 		log := trace("something wrong is caught: %v", err)
-		for _, l := range log {
-			fmt.Println(l)
-		}
+		fmt.Println(log)
 	})
 	panic(fmt.Errorf("a deliberate error"))
 }
@@ -22,8 +21,12 @@ func main() {
 		fmt.Println(verinfo())
 		return
 	}
+	//SetDebugTargets("*")
+	SetDebugTargets("work")
+	//SetDebugTargets("main,work")
 	fmt.Println("This is [main] project.")
 	err := work()
+	Dbg("work done")
 	fmt.Println("===")
 	Error(err)
 }
