@@ -28,8 +28,11 @@ func Dbg(msg string, args ...interface{}) {
 	} else {
 		caller := ""
 		log := trace("")
-		if len(log) > 1 {
-			caller = log[1]
+		for _, l := range log {
+			if l != "" {
+				caller = l
+				break
+			}
 		}
 		if caller == "" {
 			wanted = true
@@ -48,7 +51,13 @@ func Dbg(msg string, args ...interface{}) {
 }
 
 func SetDebugTargets(targets string) {
-	DEBUG_TARGETS = strings.Split(targets, ",")
+	DEBUG_TARGETS = []string{}
+	for _, t := range strings.Split(targets, ",") {
+		t = strings.TrimSpace(t)
+		if t != "" {
+			DEBUG_TARGETS = append(DEBUG_TARGETS, t)
+		}
+	}
 }
 
 func Perf(tag string, work func()) {
