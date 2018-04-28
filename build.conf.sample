@@ -10,3 +10,5 @@ POST_COMP_EXEC=|echo|"I am post-comp script"
 #BUILD_TAGS=
 
 #EXTRA_LDFLAGS=
+
+#EXTRA_ENVIRON=

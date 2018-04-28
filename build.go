@@ -34,8 +34,11 @@ type buildConf struct {
 	PRE_DEBUG_EXEC []string
 	POST_COMP_EXEC []string
 	EXTRA_LDFLAGS  string
+	EXTRA_ENVIRON  []string
 	BUILD_TAGS     string
 }
+
+var bc buildConf
 
 var (
 	PROJ_ROOT, PROJ_NAME, CMD string
@@ -200,7 +203,7 @@ func getGitInfo() (branch, hash string, revisions int) {
 	return
 }
 
-func parseConf() (bc buildConf, err error) {
+func parseConf() (err error) {
 	conf := path.Join(PROJ_ROOT, "src", PROJ_NAME, "build.conf")
 	f, err := os.Open(conf)
 	if err != nil {
@@ -239,6 +242,8 @@ func parseConf() (bc buildConf, err error) {
 			bc.POST_COMP_EXEC = getCmd(kv[1])
 		case "EXTRA_LDFLAGS":
 			bc.EXTRA_LDFLAGS = strings.TrimSpace(kv[1])
+		case "EXTRA_ENVIRON":
+			bc.EXTRA_ENVIRON = getCmd(kv[1])
 		case "BUILD_TAGS":
 			bc.BUILD_TAGS = strings.TrimSpace(kv[1])
 		default:
@@ -262,6 +267,7 @@ func run(args ...string) (err error) {
 		} else if CMD == "arm" {
 			cmd.Env = append(cmd.Env, "GOARCH=arm", "GOARM=7")
 		}
+		cmd.Env = append(cmd.Env, bc.EXTRA_ENVIRON...)
 	}
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
@@ -364,7 +370,7 @@ func main() {
 		return
 	}
 	fmt.Println()
-	bc, err := parseConf()
+	err := parseConf()
 	if err != nil {
 		fmt.Printf("parseConf: %s\n", err)
 		os.Exit(1)
