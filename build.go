@@ -77,6 +77,9 @@ func getDepends() (deps []depSpec) {
 				gs.isGit = false
 			}
 		}
+		if strings.HasSuffix(gs.path, ".git") {
+			gs.path = gs.path[:len(gs.path)-4]
+		}
 		gs.commit = "HEAD"
 		gs.branch = "master"
 		if len(spec) == 2 {
