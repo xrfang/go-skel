@@ -99,7 +99,7 @@ func getDepends() (deps []depSpec) {
 	return
 }
 
-func updDepends(deps []depSpec, full bool) (depRoots []string) {
+func updDepends(deps []depSpec, mode int) (depRoots []string) {
 	PROJ_SRC := path.Join(PROJ_ROOT, "src")
 	rs := make(map[string]int)
 	for _, repo := range deps {
@@ -109,14 +109,25 @@ func updDepends(deps []depSpec, full bool) (depRoots []string) {
 		cd := path.Join(PROJ_SRC, repo.path)
 		fi, err := os.Stat(path.Join(cd, ".git"))
 		if err == nil && fi.IsDir() {
-			if !full {
+			switch mode {
+			case 1: //force re-sync
+				err := exec.Command("rm", "-fr", cd).Run()
+				if err != nil {
+					fmt.Printf("\nFAILED: rm -fr %s (%v)\n", cd, err)
+					os.Exit(1)
+				}
+			case 2: //update repo
+				if repo.isGit {
+					_, err = exec.Command("git", "-C", cd, "pull").Output()
+					assert(err)
+				} else {
+					assert(run("go", "get", "-u", repo.url))
+				}
+				fmt.Println(" ...updated")
+				continue
+			default: //skip if exists
 				fmt.Println(" ...skipped")
 				continue
-			}
-			err := exec.Command("rm", "-fr", cd).Run()
-			if err != nil {
-				fmt.Printf("\nFAILED: rm -fr %s (%v)\n", cd, err)
-				os.Exit(1)
 			}
 		}
 		fmt.Printf("\n")
@@ -367,7 +378,16 @@ func main() {
 	CMD = path.Base(os.Args[0])
 	parseCmdline()
 	assert(os.Chdir(PROJ_ROOT))
-	depRoots := updDepends(getDepends(), CMD == "sync")
+	var syncMode int
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "-force":
+			syncMode = 1
+		case "-update":
+			syncMode = 2
+		}
+	}
+	depRoots := updDepends(getDepends(), syncMode)
 	updGitIgnore(depRoots)
 	if CMD == "sync" {
 		return
