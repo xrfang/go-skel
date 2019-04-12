@@ -153,6 +153,7 @@ func updDepends(deps []depSpec, mode int) (depRoots []string) {
 		if repo.commit != "HEAD" {
 			os.Chdir(cd)
 			assert(exec.Command("git", "checkout", repo.commit).Run())
+			os.Chdir(PROJ_ROOT)
 		}
 	}
 	for r := range rs {
