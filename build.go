@@ -15,6 +15,12 @@ import (
 	"time"
 )
 
+const (
+	//路径中带有这个字串的标识为mirror仓库，builder会自动创建符号连接，规则是
+	//取前缀后面部分，将下划线(_)替换为路径符(/)，然后创建符号连接，见代码。
+	mirrorPrefix = "3rdparty/"
+)
+
 func assert(err error) {
 	if err != nil {
 		panic(err)
@@ -41,8 +47,8 @@ type buildConf struct {
 var bc buildConf
 
 var (
-	PROJ_ROOT, PROJ_NAME, CMD string
-	PROJ_ARGS                 []string
+	PROJ_ROOT, PROJ_SRC, PROJ_NAME, CMD string
+	PROJ_ARGS                           []string
 )
 
 func getDepends() (deps []depSpec) {
@@ -99,12 +105,26 @@ func getDepends() (deps []depSpec) {
 	return
 }
 
+func createMirrorLink(mirror, origin string) {
+	mirror = path.Join(PROJ_SRC, mirror)
+	assert(os.Chdir(PROJ_SRC))
+	defer os.Chdir(PROJ_ROOT)
+	assert(run("mkdir", "-p", path.Dir(origin)))
+	assert(run("rm", "-fr", origin))
+	assert(run("ln", "-s", mirror, origin))
+}
+
 func updDepends(deps []depSpec, mode int) (depRoots []string) {
-	PROJ_SRC := path.Join(PROJ_ROOT, "src")
+	PROJ_SRC = path.Join(PROJ_ROOT, "src")
 	rs := make(map[string]int)
+	links := make(map[string]string)
 	for _, repo := range deps {
 		fmt.Printf("clone: %s %s@%s", repo.url, repo.branch, repo.commit)
-		root := strings.SplitN(repo.path, "/", 2)[0]
+		ps := strings.SplitN(repo.path, "/", 2)
+		root := ps[0]
+		if strings.HasPrefix(ps[1], mirrorPrefix) {
+			links[repo.path] = strings.ReplaceAll(ps[1][len(mirrorPrefix):], "_", "/")
+		}
 		rs[root] = 1
 		cd := path.Join(PROJ_SRC, repo.path)
 		fi, err := os.Stat(path.Join(cd, ".git"))
@@ -158,6 +178,11 @@ func updDepends(deps []depSpec, mode int) (depRoots []string) {
 	}
 	for r := range rs {
 		depRoots = append(depRoots, r)
+	}
+	for mir, org := range links {
+		r := strings.SplitN(org, "/", 2)
+		depRoots = append(depRoots, r[0])
+		createMirrorLink(mir, org)
 	}
 	return
 }
